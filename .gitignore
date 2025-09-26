@@ -38,6 +38,4 @@ terraform.rc
 
 #
 volume/
-
-#
-notes.md
+secrets/
