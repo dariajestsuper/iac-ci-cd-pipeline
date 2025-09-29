@@ -1,3 +1,4 @@
+# DynamoDB Table
 resource "aws_dynamodb_table" "this" {
   provider     = aws.localstack
   name         = "items_table"
@@ -10,12 +11,13 @@ resource "aws_dynamodb_table" "this" {
   }
 }
 
+# IAM Role for Lambda
 data "aws_iam_policy_document" "this" {
   statement {
     actions = ["sts:AssumeRole"]
 
     principals {
-      type =  "Federated"
+      type        = "Federated"
       identifiers = ["arn:aws:iam::000000000000:role/lambda-role"]
     }
   }
@@ -25,6 +27,7 @@ resource "aws_iam_role" "this" {
   assume_role_policy = data.aws_iam_policy_document.this.json
 }
 
+# Lambda Function
 data "archive_file" "this" {
   type        = "zip"
   source_file = "${path.module}/../app/app.py"
@@ -41,60 +44,121 @@ resource "aws_lambda_function" "this" {
 
 }
 
-resource "aws_lambda_function_url" "this" {
-  function_name = aws_lambda_function.this.function_name
-  authorization_type = "NONE"
+# REST API Gateway (v1)
+resource "aws_api_gateway_rest_api" "this" {
+  name = "items_api"
 }
 
-# resource "aws_api_gateway_rest_api" "this" {
-#   name = "items_api"
-# }
+# /items
+resource "aws_api_gateway_resource" "items" {
+  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  path_part   = "items"
+}
 
-# resource "aws_api_gateway_resource" "this" {
-#   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
-#   path_part   = "items"
-#   rest_api_id = aws_api_gateway_rest_api.this.id
-# }
+# GET /items
+resource "aws_api_gateway_method" "get_items" {
+  authorization = "NONE"
+  http_method   = "GET"
+  resource_id   = aws_api_gateway_resource.items.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
 
-# resource "aws_api_gateway_method" "this" {
-#   authorization = "NONE"
-#   http_method   = "GET"
-#   resource_id   = aws_api_gateway_resource.this.id
-#   rest_api_id   = aws_api_gateway_rest_api.this.id
-# }
+resource "aws_api_gateway_integration" "get_items" {
+  http_method             = aws_api_gateway_method.get_items.http_method
+  resource_id             = aws_api_gateway_resource.items.id
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.this.invoke_arn
+}
 
-# resource "aws_api_gateway_integration" "this" {
-#   http_method = aws_api_gateway_method.this.http_method
-#   resource_id = aws_api_gateway_resource.this.id
-#   rest_api_id = aws_api_gateway_rest_api.this.id
-#   type        = "MOCK"
-# }
+# PUT /items
+resource "aws_api_gateway_method" "put_items" {
+  authorization = "NONE"
+  http_method   = "PUT"
+  resource_id   = aws_api_gateway_resource.items.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
 
-# resource "aws_api_gateway_deployment" "this" {
-#   rest_api_id = aws_api_gateway_rest_api.this.id
+resource "aws_api_gateway_integration" "put_items" {
+  http_method             = aws_api_gateway_method.put_items.http_method
+  resource_id             = aws_api_gateway_resource.items.id
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.this.invoke_arn
+}
 
-#   triggers = {
-#     # NOTE: The configuration below will satisfy ordering considerations,
-#     #       but not pick up all future REST API changes. More advanced patterns
-#     #       are possible, such as using the filesha1() function against the
-#     #       Terraform configuration file(s) or removing the .id references to
-#     #       calculate a hash against whole resources. Be aware that using whole
-#     #       resources will show a difference after the initial implementation.
-#     #       It will stabilize to only change when resources change afterwards.
-#     redeployment = sha1(jsonencode([
-#       aws_api_gateway_resource.this.id,
-#       aws_api_gateway_method.this.id,
-#       aws_api_gateway_integration.this.id,
-#     ]))
-#   }
+# /items/{id}
+resource "aws_api_gateway_resource" "items_id" {
+  parent_id   = aws_api_gateway_resource.items.id
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  path_part   = "items_id"
+}
 
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+# GET /items/{id}
+resource "aws_api_gateway_method" "get_items_id" {
+  authorization = "NONE"
+  http_method   = "GET"
+  resource_id   = aws_api_gateway_resource.items_id.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
 
-# resource "aws_api_gateway_stage" "this" {
-#   deployment_id = aws_api_gateway_deployment.this.id
-#   rest_api_id   = aws_api_gateway_rest_api.this.id
-#   stage_name    = "this"
-# }
+resource "aws_api_gateway_integration" "items_id" {
+  http_method             = aws_api_gateway_method.get_items_id.http_method
+  resource_id             = aws_api_gateway_resource.items_id.id
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.this.invoke_arn
+}
+
+# DELETE /items/{id}
+resource "aws_api_gateway_method" "delete_items_id" {
+  authorization = "NONE"
+  http_method   = "DELETE"
+  resource_id   = aws_api_gateway_resource.items_id.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
+
+resource "aws_api_gateway_integration" "delete_items_id" {
+  http_method             = aws_api_gateway_method.delete_items_id.http_method
+  resource_id             = aws_api_gateway_resource.items_id.id
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.this.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "this" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+
+  depends_on = [ aws_api_gateway_integration.get_items,
+                 aws_api_gateway_integration.put_items,
+                 aws_api_gateway_integration.items_id,
+                 aws_api_gateway_integration.delete_items_id,
+                 aws_api_gateway_method.delete_items_id,
+                 aws_api_gateway_method.get_items,
+                 aws_api_gateway_method.get_items_id,
+                 aws_api_gateway_method.put_items ]
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_method.get_items.id,
+      aws_api_gateway_method.put_items.id,
+      aws_api_gateway_method.get_items_id.id,
+      aws_api_gateway_method.delete_items_id.id
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "this" {
+  deployment_id = aws_api_gateway_deployment.this.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  stage_name    = "this"
+}
