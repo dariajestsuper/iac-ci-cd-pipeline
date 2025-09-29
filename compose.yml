@@ -1,26 +1,26 @@
 services:
-  app:
-    build: ./app
-    container_name: items_app
-    ports:
-      - "5000:5000"
-    environment:
-      # - AWS_ACCESS_KEY_ID=run/secrets/app_access_key
-      # - AWS_SECRET_ACCESS_KEY=run/secrets/app_secret_key
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-      - DYNAMODB_ENDPOINT=http://localstack:4566
-    # secrets:
-    #   - app_secret_key
-    #   - app_access_key
-    # entrypoint: >
-    #   sh -c '
-    #   export AWS_ACCESS_KEY_ID=$(cat /run/secrets/app_access_key) &&
-    #   export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/app_secret_key) &&
-    #   '
-    depends_on:
-      - localstack
+  # app:
+  #   build: ./app
+  #   container_name: items_app
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     # - AWS_ACCESS_KEY_ID=run/secrets/app_access_key
+  #     # - AWS_SECRET_ACCESS_KEY=run/secrets/app_secret_key
+  #     - AWS_ACCESS_KEY_ID=test
+  #     - AWS_SECRET_ACCESS_KEY=test
+  #     - AWS_DEFAULT_REGION=us-east-1
+  #     - DYNAMODB_ENDPOINT=http://localstack:4566
+  #   # secrets:
+  #   #   - app_secret_key
+  #   #   - app_access_key
+  #   # entrypoint: >
+  #   #   sh -c '
+  #   #   export AWS_ACCESS_KEY_ID=$(cat /run/secrets/app_access_key) &&
+  #   #   export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/app_secret_key) &&
+  #   #   '
+  #   depends_on:
+  #     - localstack
 
 
   localstack:
@@ -31,7 +31,7 @@ services:
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
       - DEBUG=${DEBUG:-1}
-      - SERVICES=dynamodb
+      - SERVICES=dynamodb,lambda,iam,apigateway
       - PERSISTENCE=1
       - DEFAULT_REGION=us-east-1
     volumes:

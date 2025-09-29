@@ -1,11 +1,9 @@
-from flask import Flask, jsonify, request
+import json
 import boto3
-import uuid
 import os
-from botocore.exceptions import ClientError
+from decimal import Decimal
 
-app = Flask(__name__)
-
+client = boto3.client('lambda')
 dynamodb = boto3.resource(
     "dynamodb",
     region_name=os.getenv("AWS_DEFAULT_REGION"),
@@ -16,48 +14,57 @@ dynamodb = boto3.resource(
 
 table = dynamodb.Table('items_table')
 
-@app.route('/items', methods=['POST'])
-def add_item():
-    data = request.get_json()
-    if not data or "item" not in data:
-        return jsonify({"error": "Missing 'item' in request body"}), 400
 
-    item_id = str(uuid.uuid4())
-    new_item = {
-        "id": item_id,
-        "item": data["item"]
+def lambda_handler(event, context):
+    print("Hello from Lambda!")
+    print(event)
+    body = {}
+    statusCode = 200
+    headers = {
+        "Content-Type": "application/json"
     }
 
     try:
-        table.put_item(Item=new_item)
-        return jsonify(new_item), 201
-    except ClientError as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/items', methods=['GET'])
-def get_items():
-    try:
-        response = table.scan()
-        return jsonify(response.get('Items', [])), 200
-    except ClientError as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/items/<item_id>', methods=['GET'])
-def get_item(item_id):
-    try:
-        response = table.get_item(Key={'id': item_id})
-        return jsonify(response.get('Item', {})), 200
-    except ClientError as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/items/<item_id>', methods=['DELETE'])
-def delete_item(item_id):
-    try:
-        table.delete_item(Key={'id': item_id})
-        return jsonify({'message': 'Item deleted'}), 200
-    except ClientError as e:
-        return jsonify({'error': str(e)}), 500
-
-
-if __name__ == '__main__':
-    app.run(debug = True)
+        if event['routeKey'] == "DELETE /items/{id}":
+            table.delete_item(
+                Key={'id': event['pathParameters']['id']})
+            body = 'Deleted item ' + event['pathParameters']['id']
+        elif event['routeKey'] == "GET /items/{id}":
+            body = table.get_item(
+                Key={'id': event['pathParameters']['id']})
+            body = body["Item"]
+            responseBody = [
+                {'price': float(body['price']), 'id': body['id'], 'name': body['name']}]
+            body = responseBody
+        elif event['routeKey'] == "GET /items":
+            body = table.scan()
+            body = body["Items"]
+            print("ITEMS----")
+            print(body)
+            responseBody = []
+            for items in body:
+                responseItems = [
+                    {'price': float(items['price']), 'id': items['id'], 'name': items['name']}]
+                responseBody.append(responseItems)
+            body = responseBody
+        elif event['routeKey'] == "PUT /items":
+            requestJSON = json.loads(event['body'])
+            table.put_item(
+                Item={
+                    'id': requestJSON['id'],
+                    'price': Decimal(str(requestJSON['price'])),
+                    'name': requestJSON['name']
+                })
+            body = 'Put item ' + requestJSON['id']
+    except KeyError:
+        statusCode = 400
+        body = 'Unsupported route: ' + event['routeKey']
+    body = json.dumps(body)
+    res = {
+        "statusCode": statusCode,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": body
+    }
+    return res
