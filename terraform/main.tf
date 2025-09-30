@@ -94,7 +94,7 @@ resource "aws_api_gateway_integration" "put_items" {
 resource "aws_api_gateway_resource" "items_id" {
   parent_id   = aws_api_gateway_resource.items.id
   rest_api_id = aws_api_gateway_rest_api.this.id
-  path_part   = "items_id"
+  path_part   = "{id}"
 }
 
 # GET /items/{id}
@@ -160,5 +160,5 @@ resource "aws_api_gateway_deployment" "this" {
 resource "aws_api_gateway_stage" "this" {
   deployment_id = aws_api_gateway_deployment.this.id
   rest_api_id   = aws_api_gateway_rest_api.this.id
-  stage_name    = "this"
+  stage_name    = "dev"
 }
