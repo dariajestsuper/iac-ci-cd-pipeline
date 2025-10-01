@@ -1,4 +1,4 @@
-echo "Checking prerequisites."
+echo "[INFO] Checking prerequisites."
 
 prerequisites_met=true
 
