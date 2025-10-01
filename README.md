@@ -30,20 +30,10 @@ _A diagram will be added after initial infrastructure setup._
 
 ---
 
-## 🚀 How to Run (Local)
+## 🚀 How to Run
 
-```bash
-# Start LocalStack
-docker-compose up -d
-
-# Initialize Terraform
-cd terraform
-terraform init
-terraform plan
-terraform apply
-
-# Run the application locally
-cd ../app
-docker build -t iac-app .
-docker run -p 5000:5000 iac-app
+```
+cd iac-ci-cd-pipeline/scripts
+chmod a+x run.sh
+./run.sh
 ```
