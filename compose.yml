@@ -3,8 +3,8 @@ services:
     image: localstack/localstack
     container_name: items_localstack
     ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
     environment:
       - DEBUG=${DEBUG:-1}
       - SERVICES=dynamodb,lambda,iam,apigateway
