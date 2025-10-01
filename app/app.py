@@ -69,4 +69,3 @@ def lambda_handler(event, context):
         "body": json.dumps(body, cls=DecimalEncoder)
     }
 
-
