@@ -134,14 +134,14 @@ resource "aws_api_gateway_integration" "delete_items_id" {
 resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.this.id
 
-  depends_on = [ aws_api_gateway_integration.get_items,
-                 aws_api_gateway_integration.put_items,
-                 aws_api_gateway_integration.items_id,
-                 aws_api_gateway_integration.delete_items_id,
-                 aws_api_gateway_method.delete_items_id,
-                 aws_api_gateway_method.get_items,
-                 aws_api_gateway_method.get_items_id,
-                 aws_api_gateway_method.put_items ]
+  depends_on = [aws_api_gateway_integration.get_items,
+    aws_api_gateway_integration.put_items,
+    aws_api_gateway_integration.items_id,
+    aws_api_gateway_integration.delete_items_id,
+    aws_api_gateway_method.delete_items_id,
+    aws_api_gateway_method.get_items,
+    aws_api_gateway_method.get_items_id,
+  aws_api_gateway_method.put_items]
 
   triggers = {
     redeployment = sha1(jsonencode([
