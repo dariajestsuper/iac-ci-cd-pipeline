@@ -1,4 +1,5 @@
 name: Test Lambda Function
+runs-on: self-hosted
 on:
     push:
         paths:
