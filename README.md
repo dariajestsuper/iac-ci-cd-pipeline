@@ -33,7 +33,5 @@ _A diagram will be added after initial infrastructure setup._
 ## 🚀 How to Run
 
 ```
-cd iac-ci-cd-pipeline/scripts
-chmod a+x run.sh
-./run.sh
+TODO
 ```
